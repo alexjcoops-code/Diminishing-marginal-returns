@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#cfe4ff">
+  <title>Too Many Cooks in the Cloud Kitchen</title>
+  <meta name="description" content="A 3D game about the law of diminishing marginal returns.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥐</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-stage="none">
+  <canvas id="scene" aria-label="A floating bakery on an island in the sky"></canvas>
+
+  <header class="hud">
+    <div class="brand card">
+      <div class="brand-icon" aria-hidden="true">🥐</div>
+      <div>
+        <div class="brand-title">Cloud Kitchen</div>
+        <div id="levelBadge" class="badge">Level 1 · One oven</div>
+      </div>
+    </div>
+    <div class="stats card">
+      <div class="stat"><span class="stat-k">Chefs</span><span class="stat-v" id="statChefs">0</span></div>
+      <div class="stat"><span class="stat-k">Croissants</span><span class="stat-v" id="statTP">0</span></div>
+      <div class="stat"><span class="stat-k">Profit/shift</span><span class="stat-v" id="statProfit">£0</span></div>
+      <button id="muteBtn" class="icon-btn" aria-label="Mute sound" aria-pressed="false" title="Sound on/off">🔊</button>
+    </div>
+  </header>
+
+  <div id="bubble" class="bubble" hidden role="status" aria-live="polite">
+    <div class="bubble-name">Professor Margin</div>
+    <p id="bubbleText"></p>
+    <button id="bubbleNext" class="bubble-next" hidden>Next <span class="arrow">▸</span></button>
+  </div>
+
+  <nav class="controls" aria-label="Game controls">
+    <button id="hireBtn" class="btn btn-hire" disabled><span class="btn-ico">＋</span><span class="btn-txt">Hire chef<small id="hireCost">£15 / shift</small></span></button>
+    <button id="fireBtn" class="btn btn-fire" disabled><span class="btn-ico">−</span><span class="btn-txt">Fire chef<small>last one hired</small></span></button>
+    <button id="ovenBtn" class="btn btn-oven" hidden><span class="btn-ico">🔥</span><span class="btn-txt">Buy 2nd oven<small id="ovenCost">+£20 rent</small></span></button>
+    <button id="quizBtn" class="btn btn-quiz" hidden><span class="btn-ico">🎓</span><span class="btn-txt">Quiz me<small>3 questions</small></span></button>
+  </nav>
+
+  <aside id="panel" class="panel card" aria-label="Production data">
+    <button id="panelToggle" class="panel-handle" aria-expanded="true" aria-controls="panelBody">
+      <span class="grip" aria-hidden="true"></span>
+      <span class="handle-title">📈 Production data</span>
+      <span id="handleSummary" class="handle-summary"></span>
+      <span class="chev" aria-hidden="true">▾</span>
+    </button>
+    <div id="panelBody" class="panel-body">
+      <div id="chartWrap" class="chart-wrap"><canvas id="chart" aria-label="Total, marginal and average product against number of chefs" role="img"></canvas></div>
+      <div class="formulas">
+        <div class="f-row"><span class="f-label">Marginal product</span><div id="fMP" class="f-tex"></div></div>
+        <div class="f-row"><span class="f-label">Average product</span><div id="fAP" class="f-tex"></div></div>
+        <div class="f-row"><span class="f-label">Profit per shift</span><div id="fProfit" class="f-tex f-small"></div></div>
+      </div>
+      <div id="verdict" class="verdict"></div>
+      <table class="data-table">
+        <thead><tr><th>L</th><th>TP</th><th>MP</th><th>AP</th><th>Profit</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <p class="key"><span class="sw inc"></span>Increasing <span class="sw dim"></span>Diminishing <span class="sw neg"></span>Negative returns</p>
+    </div>
+  </aside>
+
+  <div id="intro" class="overlay">
+    <div class="modal intro-card">
+      <div class="intro-emoji" aria-hidden="true">☁️🥐☁️</div>
+      <h1>Too Many Cooks<br><span>in the Cloud Kitchen</span></h1>
+      <p>Your floating bakery has <b>one oven</b> and <b>one counter</b>. Hire chefs, watch the croissants, and find the team size that makes the <b>most profit</b>.</p>
+      <p class="muted small">Drag to orbit · scroll or pinch to zoom · sound on 🔊</p>
+      <button id="startBtn" class="btn btn-hire btn-big">Start baking ▸</button>
+    </div>
+  </div>
+
+  <div id="celebrate" class="overlay" hidden>
+    <div class="modal celebrate-card">
+      <div class="celebrate-emoji" aria-hidden="true">🎉</div>
+      <h2 id="celebrateTitle">You found the sweet spot!</h2>
+      <p id="celebrateBody"></p>
+      <button id="celebrateBtn" class="btn btn-hire btn-big">Continue</button>
+    </div>
+  </div>
+
+  <div id="quiz" class="overlay" hidden>
+    <div class="modal quiz-card" role="dialog" aria-labelledby="quizProgress">
+      <div class="quiz-head"><span>🎓 Professor Margin's Quiz</span><span id="quizProgress"></span></div>
+      <div id="quizBody"></div>
+    </div>
+  </div>
+
+  <div id="fps" hidden></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="src/config.js"></script>
+  <script src="src/economics.js"></script>
+  <script src="src/utils.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/effects.js"></script>
+  <script src="src/scene.js"></script>
+  <script src="src/chef.js"></script>
+  <script src="src/professor.js"></script>
+  <script src="src/dialogue.js"></script>
+  <script src="src/ui.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>

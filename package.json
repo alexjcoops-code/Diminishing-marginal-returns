@@ -1,0 +1,12 @@
+{
+  "name": "too-many-cooks-cloud-kitchen",
+  "version": "1.0.0",
+  "description": "A 3D Three.js game that teaches the law of diminishing marginal returns.",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/serve.js",
+    "start": "node scripts/serve.js",
+    "test": "node tests/economics.test.js"
+  },
+  "license": "MIT"
+}
