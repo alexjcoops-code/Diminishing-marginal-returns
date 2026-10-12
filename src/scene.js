@@ -19,6 +19,8 @@
   const PROF_HOME = V(4.3, 2.5, 4.5);
 
   let renderer, scene, camera, controls;
+  // Scratch objects reused every frame (no per-frame allocations).
+  const _mtx = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = V(0, 0, 0), _s = V(1, 1, 1);
   const shake = { amount: 0, offset: V(0, 0, 0) };
   let viewShift = 0, fitDist = 18;
 
@@ -463,9 +465,11 @@
       if (fb && tb) {
         if (Math.abs(from.x - to.x) > 0.2) path.push(V(from.x, FLOOR, LANE_Z), V(to.x, FLOOR, LANE_Z));
       } else if (fb !== tb) {
-        const sx = (from.x + to.x <= 0 ? -1 : 1) * SIDE_X;
-        if (fb) path.push(V(from.x, FLOOR, LANE_Z), V(sx, FLOOR, LANE_Z), V(sx, FLOOR, FRONT_Z));
-        else path.push(V(sx, FLOOR, FRONT_Z), V(sx, FLOOR, LANE_Z), V(to.x, FLOOR, LANE_Z));
+        const other = fb ? to : from; // the end that is not behind the counter
+        const beside = Math.abs(other.x) >= SIDE_X - 0.1 && other.z < FRONT_Z; // already level with the back lane
+        const sx = (beside ? Math.sign(other.x) : from.x + to.x <= 0 ? -1 : 1) * SIDE_X;
+        if (fb) path.push(V(from.x, FLOOR, LANE_Z), V(sx, FLOOR, LANE_Z), ...(beside ? [] : [V(sx, FLOOR, FRONT_Z)]));
+        else path.push(...(beside ? [] : [V(sx, FLOOR, FRONT_Z)]), V(sx, FLOOR, LANE_Z), V(to.x, FLOOR, LANE_Z));
       } else if (this.crossesCounter(from, to)) {
         path.push(V((from.x <= 0 ? -1 : 1) * SIDE_X, FLOOR, FRONT_Z));
       }
@@ -497,7 +501,7 @@
         if (ov.smokeT <= 0) { Effects.smoke(ov.chimney); ov.smokeT = productionRate > 0 ? 0.28 : 0.9; }
       });
 
-      const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = V(0, 0, 0), s = V(1, 1, 1);
+      const mtx = _mtx, q = _q, e = _e, p = _p, s = _s;
       let k = 0;
       this.clouds.forEach((c) => {
         c.x += c.speed * dt;
@@ -513,7 +517,7 @@
     },
 
     updateCroissants(dt) {
-      const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), s = V(1, 1, 1);
+      const mtx = _mtx, q = _q, e = _e, s = _s;
       const speed = CK.CONFIG.visual.beltSpeed;
       this.cItems.forEach((c, i) => {
         if (!c.on) { this.cMesh.setMatrixAt(i, mtx.makeScale(0, 0, 0)); return; }
@@ -556,7 +560,7 @@
       this.cMesh.instanceMatrix.needsUpdate = true;
     },
     updateCoins(dt) {
-      const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = V(0, 0, 0), s = V(1, 1, 1);
+      const mtx = _mtx, q = _q, e = _e, p = _p, s = _s;
       this.coins.forEach((c, i) => {
         if (!c.on) { this.coinMesh.setMatrixAt(i, mtx.makeScale(0, 0, 0)); return; }
         c.t += dt / 0.8;

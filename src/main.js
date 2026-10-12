@@ -20,6 +20,7 @@
   };
   let prof;
 
+  const setBusy = (v) => { S.busy = v; UI.update(S); };
   const say = (text, opts = {}) => UI.say(text, Object.assign({ prof }, opts));
   const stage = () => (S.chefs.length ? S.econ.rows[S.chefs.length].stage : 'none');
 
@@ -50,13 +51,13 @@
     Audio.init();
     Audio.play('click');
     UI.hideIntro();
-    S.busy = true;
+    setBusy(true);
     World.introSweep(2.4);
     await Tween.wait(0.8);
     await prof.flyIn();
     for (const line of Lines.intro()) await say(line, { next: true });
     S.started = true;
-    S.busy = false;
+    setBusy(false);
     UI.update(S);
     UI.pulse('hireBtn');
     say(Lines.ready());
@@ -115,8 +116,7 @@
     const n = S.chefs.length, e = S.econ, lvl = S.ovens;
     if (n !== e.sweetSpot || S.found[lvl] || S.maxSeen[lvl] <= n) return false;
     S.found[lvl] = true;
-    S.busy = true;
-    UI.update(S);
+    setBusy(true);
     const info = { n, r: e.rows[n], next: e.rows[n + 1], lvl };
     prof.react('celebrate');
     Audio.play('fanfare');
@@ -129,7 +129,7 @@
         body: Lines.sweetCard(info),
         button: lvl === 1 ? 'Unlock Level 2 ▸' : 'Take the quiz 🎓',
       });
-      S.busy = false;
+      setBusy(false);
       if (lvl === 1) { UI.show('ovenBtn', true); UI.pulse('ovenBtn'); say(Lines.level2Prompt()); }
       else { UI.show('quizBtn', true); UI.pulse('quizBtn'); say(Lines.quizPrompt()); }
     }, 1300);
@@ -138,7 +138,7 @@
 
   async function buyOven() {
     if (S.ovens > 1 || S.busy) return;
-    S.busy = true;
+    setBusy(true);
     UI.show('ovenBtn', false);
     S.ovens = 2;
     S.econ = CK.computeEconomics(C, 2);
@@ -150,7 +150,7 @@
     UI.update(S);
     prof.react('spin');
     for (const line of Lines.level2()) await say(line, { next: true });
-    S.busy = false;
+    setBusy(false);
     UI.update(S);
     UI.hideBubble();
     checkSweetSpot();
@@ -158,12 +158,12 @@
 
   async function quiz() {
     if (S.busy) return;
-    S.busy = true;
+    setBusy(true);
     UI.hideBubble();
     const score = await UI.runQuiz(CK.buildQuiz(), {
       onAnswer: (ok) => { prof.react(ok ? 'spin' : 'facepalm'); },
     });
-    S.busy = false;
+    setBusy(false);
     if (score === 3) { Effects.confetti(new THREE.Vector3(0, 3, 0), 200, 5); Audio.play('fanfare'); prof.react('celebrate'); }
     say(Lines.quizEnd(score));
   }

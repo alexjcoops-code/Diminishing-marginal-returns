@@ -170,6 +170,7 @@
           Audio.play('land');
           Effects.puff(V(at.x, at.y + 0.1, at.z), { count: 12, size: 0.5, speed: 1.8, color: 0xffffff });
           Tween.tween(0.5, (k) => { const w = Math.exp(-6 * k) * Math.cos(k * 20) * 0.35; this.rig.scale.set(1 + w, 1 - w, 1 + w); }, { ease: Ease.linear, owner: this, onComplete: () => this.rig.scale.set(1, 1, 1) });
+          if (this.pendingLeave) { this.state = 'move'; this.leave(this.onGone); return; }
           this.state = 'move';
           this.retarget();
         },
@@ -201,10 +202,11 @@
     }
 
     leave(onGone) {
+      this.onGone = onGone;
+      if (this.state === 'drop') { this.pendingLeave = true; return; } // leave once landed
       this.state = 'leaving';
       this.role = 'leaving';
       this.slot = null;
-      this.onGone = onGone;
       this.path = World.planPath(this.pos, World.slots.exit);
       this.showIcon('dots', 1.2);
     }

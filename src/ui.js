@@ -97,18 +97,25 @@
       $('ovenBtn').addEventListener('click', () => { Audio.play('click'); h.onOven(); });
       $('quizBtn').addEventListener('click', () => { Audio.play('click'); h.onQuiz(); });
       $('startBtn').addEventListener('click', () => h.onStart());
-      $('muteBtn').addEventListener('click', () => {
-        const m = !Audio.isMuted();
+      const setMute = (m) => {
         Audio.setMuted(m);
         $('muteBtn').textContent = m ? '🔇' : '🔊';
         $('muteBtn').setAttribute('aria-pressed', String(m));
-      });
+        try { localStorage.setItem('ck-muted', m ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+      };
+      try { if (localStorage.getItem('ck-muted') === '1') setMute(true); } catch (e) { /* storage unavailable */ }
+      $('muteBtn').addEventListener('click', () => setMute(!Audio.isMuted()));
       $('bubble').addEventListener('click', (ev) => { if (ev.target.id !== 'bubbleNext') this.finishTyping(); });
       $('bubbleNext').addEventListener('click', () => { Audio.play('click'); this.advance(); });
       $('panelToggle').addEventListener('click', () => this.togglePanel());
       window.addEventListener('keydown', (ev) => {
         if (ev.target.tagName === 'BUTTON' && (ev.key === 'Enter' || ev.key === ' ')) return;
-        if (!$('bubbleNext').hidden && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); this.advance(); }
+        if (!$('bubbleNext').hidden && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); this.advance(); return; }
+        const overlayOpen = ['intro', 'celebrate', 'quiz'].some((id) => !$(id).hidden);
+        if (overlayOpen || ev.ctrlKey || ev.metaKey || ev.altKey || ev.repeat) return;
+        const key = ev.key.toLowerCase();
+        if (key === 'h' && !$('hireBtn').disabled) $('hireBtn').click();
+        else if (key === 'f' && !$('fireBtn').disabled) $('fireBtn').click();
       });
       $('hireCost').textContent = `${money(C.wage)} / shift`;
       $('ovenCost').textContent = `+${money(C.ovenRent)} rent / shift`;
@@ -230,13 +237,17 @@
       this.animateProfit(r.profit);
       $('levelBadge').textContent = S.ovens > 1 ? 'Level 2 · Two ovens' : 'Level 1 · One oven';
       $('handleSummary').textContent = L ? `TP ${r.TP} · MP ${r.MP} · ${money(r.profit)}` : '';
-      $('hireBtn').disabled = !S.started || L >= C.maxChefs;
-      $('fireBtn').disabled = !S.started || L === 0;
+      const locked = !S.started || S.busy;
+      $('hireBtn').disabled = locked || L >= C.maxChefs;
+      $('fireBtn').disabled = locked || L === 0;
+      $('ovenBtn').disabled = $('quizBtn').disabled = locked;
       const stage = L ? r.stage : 'none';
       document.body.dataset.stage = stage;
     },
 
     animateProfit(target) {
+      if (target === this.profitTarget) return;
+      this.profitTarget = target;
       const from = this.shownProfit, el = $('statProfit');
       el.classList.toggle('neg', target < 0);
       if (this.profitTween) Tween.cancel(this.profitTween);

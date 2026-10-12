@@ -39,8 +39,8 @@
   </div>
 
   <nav class="controls" aria-label="Game controls">
-    <button id="hireBtn" class="btn btn-hire" disabled><span class="btn-ico">＋</span><span class="btn-txt">Hire chef<small id="hireCost">£15 / shift</small></span></button>
-    <button id="fireBtn" class="btn btn-fire" disabled><span class="btn-ico">−</span><span class="btn-txt">Fire chef<small>last one hired</small></span></button>
+    <button id="hireBtn" class="btn btn-hire" disabled aria-keyshortcuts="H" title="Hire chef (H)"><span class="btn-ico">＋</span><span class="btn-txt">Hire chef<small id="hireCost">£15 / shift</small></span></button>
+    <button id="fireBtn" class="btn btn-fire" disabled aria-keyshortcuts="F" title="Fire chef (F)"><span class="btn-ico">−</span><span class="btn-txt">Fire chef<small>last one hired</small></span></button>
     <button id="ovenBtn" class="btn btn-oven" hidden><span class="btn-ico">🔥</span><span class="btn-txt">Buy 2nd oven<small id="ovenCost">+£20 rent</small></span></button>
     <button id="quizBtn" class="btn btn-quiz" hidden><span class="btn-ico">🎓</span><span class="btn-txt">Quiz me<small>3 questions</small></span></button>
   </nav>
@@ -73,7 +73,7 @@
       <div class="intro-emoji" aria-hidden="true">☁️🥐☁️</div>
       <h1>Too Many Cooks<br><span>in the Cloud Kitchen</span></h1>
       <p>Your floating bakery has <b>one oven</b> and <b>one counter</b>. Hire chefs, watch the croissants, and find the team size that makes the <b>most profit</b>.</p>
-      <p class="muted small">Drag to orbit · scroll or pinch to zoom · sound on 🔊</p>
+      <p class="muted small">Drag to orbit · scroll or pinch to zoom · keys: <b>H</b> hire, <b>F</b> fire · sound on 🔊</p>
       <button id="startBtn" class="btn btn-hire btn-big">Start baking ▸</button>
     </div>
   </div>
